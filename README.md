@@ -1,6 +1,6 @@
 # SimpleLexer
 
-Takes in text and outputs Token for further operations.
+Takes in text and outputs tokens for further operations.
 You can also configure it to your needs and easily add new features.
 
 Features that are already on board are:
