@@ -12,3 +12,6 @@ Features that are already on board are:
 - single characters like:   + - * / ( ) \n . , : ;
 - comparisons like <= != == 
 - converts spaces to tabs
+
+
+You can find more info on how to use this in the Main.java
