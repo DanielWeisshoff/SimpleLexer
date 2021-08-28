@@ -59,4 +59,9 @@ public class Token {
 	public boolean isNumeric() {
 		return type == TokenType.NUMBER || type == TokenType.FLOAT;
 	}
+
+	public boolean isBoolean() {
+		return type == TokenType.LESSTHAN || type == TokenType.LESSOREQUAL || type == TokenType.GREATERTHAN
+				|| type == TokenType.GREATEROREQUAL || type == TokenType.NOTEQUAL || type == TokenType.EQUAL;
+	}
 }
