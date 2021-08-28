@@ -201,13 +201,27 @@ public class Lexer {
 		return new Token(TokenType.STRING, text.substring(start, index - 1));
 	}
 
-	//flies over one line comments
+	//skips one- and multi-lined comments 
 	private void skipComment() {
+
+		boolean multiLine = false;
+		advance();
+
+		if (currentChar == '#')
+			multiLine = true;
+
 		while (index < text.length() - 1) {
-			if (currentChar != '\n') {
-				advance();
-			} else
+			if (multiLine) {
+				if (currentChar == '#') {
+					advance();
+					if (currentChar == '#') {
+						advance();
+						return;
+					}
+				}
+			} else if (currentChar == '\n')
 				return;
+			advance();
 		}
 	}
 }
