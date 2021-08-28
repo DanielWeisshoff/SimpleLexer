@@ -99,14 +99,14 @@ public class Lexer {
 					advance();
 			} else
 				switch (currentChar) {
-				case '\'' -> t = buildStringToken('\'');
-				case '"' -> t = buildStringToken('"');
-				case '=' -> t = buildComparisonToken('=');
-				case '<' -> t = buildComparisonToken('<');
-				case '>' -> t = buildComparisonToken('>');
-				case '!' -> t = buildComparisonToken('!');
-				case '#' -> skipComment();
-				default -> advance();
+					case '\'' -> t = buildStringToken('\'');
+					case '"' -> t = buildStringToken('"');
+					case '=' -> t = buildComparisonToken();
+					case '<' -> t = buildComparisonToken();
+					case '>' -> t = buildComparisonToken();
+					case '!' -> t = buildComparisonToken();
+					case '#' -> skipComment();
+					default -> advance();
 				}
 		} while (t == null);
 		return t;
@@ -161,15 +161,29 @@ public class Lexer {
 		return new Token(TokenType.NUMBER, text.substring(start, index));
 	}
 
-	private Token buildComparisonToken(char c) {
+	private Token buildComparisonToken() {
+		char c = currentChar;
 		advance();
+
+		Token t = null;
 		if (index < text.length()) {
 			if (currentChar == '=') {
 				advance();
-				return new Token(TokenType.COMPARISON, c + "=");
+				switch (c + "=") {
+					case "<=" -> t = new Token(TokenType.LESSOREQUAL, null);
+					case ">=" -> t = new Token(TokenType.GREATEROREQUAL, null);
+					case "==" -> t = new Token(TokenType.EQUAL, null);
+					case "!=" -> t = new Token(TokenType.NOTEQUAL, null);
+				}
+				return t;
 			}
 		}
-		return new Token(TokenType.ASSIGN, "" + c);
+		switch (c) {
+			case '<' -> t = new Token(TokenType.LESSTHAN, null);
+			case '>' -> t = new Token(TokenType.GREATERTHAN, null);
+			case '!' -> t = new Token(TokenType.NOT, null);
+		}
+		return t;
 	}
 
 	private Token buildStringToken(char character) {
@@ -187,6 +201,7 @@ public class Lexer {
 		return new Token(TokenType.STRING, text.substring(start, index - 1));
 	}
 
+	//flies over one line comments
 	private void skipComment() {
 		while (index < text.length() - 1) {
 			if (currentChar != '\n') {
