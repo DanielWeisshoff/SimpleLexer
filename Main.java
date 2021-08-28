@@ -27,7 +27,7 @@ public class Main {
 
 		// There are two ways of using the lexer
 		// 1. whole input at once
-		Token[] tokens = new Lexer(input).tokenizeText();
+		Token[] tokens = new Lexer(input).tokenize();
 		for (Token t : tokens)
 			System.out.println(t.getDescription());
 

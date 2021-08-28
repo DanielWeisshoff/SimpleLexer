@@ -5,12 +5,18 @@ import java.util.HashMap;
 
 public class Lexer {
 
+	private final boolean TOKENIZE_SPACES = true;
+	private final boolean SPACES_TO_TABS = true;
+	// how many spaces form a tab
+	private final int TAB_SIZE = 4;
+
 	public static String VERSION = "V 0.8.1";
+
 	private final String text;
 	private final HashMap<Character, TokenType> tokenMap = new HashMap<>();
 	private String[] keywords;
 
-	private int charIndex = -1;
+	private int index = -1;
 	private char currentChar;
 
 	public Lexer(String text) {
@@ -32,9 +38,11 @@ public class Lexer {
 		tokenMap.put('(', TokenType.O_ROUND_BRACKET);
 		tokenMap.put(')', TokenType.C_ROUND_BRACKET);
 		tokenMap.put('\n', TokenType.NEWLINE);
+		tokenMap.put('\t', TokenType.TAB);
 		tokenMap.put('.', TokenType.DOT);
 		tokenMap.put(',', TokenType.COMMA);
 		tokenMap.put(':', TokenType.COLON);
+		tokenMap.put(';', TokenType.COLON);
 	}
 
 	protected void initKeywords() {
@@ -47,84 +55,73 @@ public class Lexer {
 	// ===============================================
 
 	private void advance() {
-		charIndex++;
-		if (charIndex < text.length())
-			currentChar = text.charAt(charIndex);
+		index++;
+		if (index < text.length())
+			currentChar = text.charAt(index);
 	}
 
-	// Tokenizes the input in one take
-	public Token[] tokenizeText() {
+	// tokenizes the input in one take
+	public Token[] tokenize() {
 		ArrayList<Token> tokens = new ArrayList<>();
 
-		while (charIndex < text.length()) {
-			if (tokenMap.containsKey(currentChar)) {
-				tokens.add(new Token(tokenMap.get(currentChar), ""));
-				advance();
-			} else if (Character.isAlphabetic(currentChar)) {
-				tokens.add(buildIdentifierToken());
-			} else if (Character.isDigit(currentChar)) {
-				tokens.add(buildNumberToken());
-			} else if (currentChar == ' ') {
-				Token t = buildTabToken();
-				if (t != null)
-					tokens.add(t);
-			} else {
-				switch (currentChar) {
-					case '\'' -> tokens.add(buildStringToken('\''));
-					case '"' -> tokens.add(buildStringToken('"'));
-					case '#' -> skipComment();
-					case '=' -> tokens.add(buildComparisonToken('='));
-					case '<' -> tokens.add(buildComparisonToken('<'));
-					case '>' -> tokens.add(buildComparisonToken('>'));
-					case '!' -> tokens.add(buildComparisonToken('!'));
-					default -> advance();
-				}
-			}
-		}
-		tokens.add(new Token(TokenType.EOF, ""));
+		Token t;
+		do {
+			t = nextToken();
+			tokens.add(t);
+		} while (!t.isEOF());
 		return Token.toArray(tokens);
 	}
 
-	// Tokenizes the next part of the input
+	//tokenizes one token at a time
 	public Token nextToken() {
-		if (charIndex >= text.length())
-			return new Token(TokenType.EOF, "");
 
-		Token token = null;
-		while (token == null && charIndex < text.length()) {
+		if (index >= text.length())
+			return new Token(TokenType.EOF, null);
+
+		Token t = null;
+		do {
 			if (tokenMap.containsKey(currentChar)) {
-				token = new Token(tokenMap.get(currentChar), "");
+				t = new Token(tokenMap.get(currentChar), null);
 				advance();
 			} else if (Character.isAlphabetic(currentChar)) {
-				token = buildIdentifierToken();
+				t = buildIdentifierToken();
 			} else if (Character.isDigit(currentChar)) {
-				token = buildNumberToken();
-			} else {
+				t = buildNumberToken();
+			} else if (currentChar == ' ') {
+				if (TOKENIZE_SPACES) {
+					if (SPACES_TO_TABS)
+						t = buildTabToken();
+					else {
+						t = new Token(TokenType.WHITESPACE, null);
+						advance();
+					}
+				} else
+					advance();
+			} else
 				switch (currentChar) {
-					case '\'' -> token = (buildStringToken('\''));
-					case '"' -> token = (buildStringToken('"'));
-					case '#' -> skipComment();
-					case '=' -> token = buildComparisonToken('=');
-					case '<' -> token = buildComparisonToken('<');
-					case '>' -> token = buildComparisonToken('>');
-					case '!' -> token = buildComparisonToken('!');
-					default -> advance();
+				case '\'' -> t = buildStringToken('\'');
+				case '"' -> t = buildStringToken('"');
+				case '=' -> t = buildComparisonToken('=');
+				case '<' -> t = buildComparisonToken('<');
+				case '>' -> t = buildComparisonToken('>');
+				case '!' -> t = buildComparisonToken('!');
+				case '#' -> skipComment();
+				default -> advance();
 				}
-			}
-		}
-		return token;
+		} while (t == null);
+		return t;
 	}
 
 	private Token buildIdentifierToken() {
-		int start = charIndex;
+		int start = index;
 		advance();
-		while (charIndex < text.length()) {
+		while (index < text.length()) {
 			if (Character.isLetterOrDigit(currentChar)) {
 				advance();
 			} else
 				break;
 		}
-		String subString = text.substring(start, charIndex);
+		String subString = text.substring(start, index);
 		for (String s : keywords)
 			if (subString.equals(s))
 				return new Token(TokenType.KEYWORD, subString);
@@ -135,20 +132,23 @@ public class Lexer {
 		Token t = null;
 		int whitespaceCount = 1;
 		advance();
-		while (currentChar == ' ' && charIndex < text.length()) {
+		while (currentChar == ' ' && index < text.length()) {
 			whitespaceCount++;
+
 			advance();
+			if (whitespaceCount == TAB_SIZE) {
+				t = new Token(TokenType.TAB, null);
+				return t;
+			}
 		}
-		if (whitespaceCount >= 4)
-			t = new Token(TokenType.TAB, "" + (int) Math.floor(whitespaceCount / 4));
-		return t;
+		return null;
 	}
 
 	private Token buildNumberToken() {
-		int start = charIndex;
+		int start = index;
 		boolean isFloat = false;
 		advance();
-		while (charIndex < text.length()) {
+		while (index < text.length()) {
 			if (Character.isDigit(currentChar) || currentChar == '.') {
 				if (currentChar == '.')
 					isFloat = true;
@@ -157,13 +157,13 @@ public class Lexer {
 				break;
 		}
 		if (isFloat)
-			return new Token(TokenType.FLOAT, text.substring(start, charIndex));
-		return new Token(TokenType.NUMBER, text.substring(start, charIndex));
+			return new Token(TokenType.FLOAT, text.substring(start, index));
+		return new Token(TokenType.NUMBER, text.substring(start, index));
 	}
 
 	private Token buildComparisonToken(char c) {
 		advance();
-		if (charIndex < text.length()) {
+		if (index < text.length()) {
 			if (currentChar == '=') {
 				advance();
 				return new Token(TokenType.COMPARISON, c + "=");
@@ -174,9 +174,9 @@ public class Lexer {
 
 	private Token buildStringToken(char character) {
 		advance();
-		int start = charIndex;
+		int start = index;
 
-		while (charIndex < text.length()) {
+		while (index < text.length()) {
 			if (currentChar != character) {
 				advance();
 			} else {
@@ -184,11 +184,11 @@ public class Lexer {
 				break;
 			}
 		}
-		return new Token(TokenType.STRING, text.substring(start, charIndex - 1));
+		return new Token(TokenType.STRING, text.substring(start, index - 1));
 	}
 
 	private void skipComment() {
-		while (charIndex < text.length() - 1) {
+		while (index < text.length() - 1) {
 			if (currentChar != '\n') {
 				advance();
 			} else
