@@ -2,6 +2,7 @@ package src.lexer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /*
 TODO
@@ -14,7 +15,7 @@ public class Lexer {
 	// how many spaces form a tab
 	private final int TAB_SIZE = 4;
 
-	public static String VERSION = "V 0.8.1";
+	public static String VERSION = "V 0.9.0";
 
 	private final String text;
 	private final HashMap<Character, TokenType> tokenMap = new HashMap<>();
@@ -91,9 +92,9 @@ public class Lexer {
 			if (tokenMap.containsKey(currentChar)) {
 				t = new Token(tokenMap.get(currentChar));
 				advance();
-			} else if (Character.isAlphabetic(currentChar)) {
+			} else if (isLetter(currentChar)) {
 				t = buildIdentifierToken();
-			} else if (Character.isDigit(currentChar)) {
+			} else if (isNumeric(currentChar)) {
 				t = buildNumberToken();
 			} else if (currentChar == ' ') {
 				if (TOKENIZE_SPACES) {
@@ -140,7 +141,7 @@ public class Lexer {
 		advance();
 
 		while (index < text.length())
-			if (Character.isLetterOrDigit(currentChar))
+			if (isLetterOrNumber(currentChar))
 				advance();
 			else
 				break;
@@ -174,7 +175,7 @@ public class Lexer {
 		advance();
 
 		while (index < text.length()) {
-			if (Character.isDigit(currentChar) || currentChar == '.') {
+			if (isNumeric(currentChar) || currentChar == '.') {
 				if (currentChar == '.')
 					isFloat = true;
 				advance();
@@ -190,7 +191,7 @@ public class Lexer {
 		char c = currentChar;
 		advance();
 
-		Token t = new Token(TokenType.EQUALS);
+		Token t = null;
 		if (index < text.length() && currentChar == '=') {
 			advance();
 			switch (c + "=") {
@@ -204,6 +205,7 @@ public class Lexer {
 				case '<' -> t = new Token(TokenType.LESSTHAN);
 				case '>' -> t = new Token(TokenType.GREATERTHAN);
 				case '!' -> t = new Token(TokenType.NOT);
+				case '=' -> t = new Token(TokenType.EQUALS);
 			}
 		return t;
 	}
@@ -246,5 +248,17 @@ public class Lexer {
 				return;
 			advance();
 		}
+	}
+
+	private boolean isLetter(char c) {
+		return CharSets.alphabetic.contains(c);
+	}
+
+	private boolean isNumeric(char c) {
+		return CharSets.numeric.contains(c);
+	}
+
+	private boolean isLetterOrNumber(char c) {
+		return CharSets.letterOrNumber.contains(c);
 	}
 }
