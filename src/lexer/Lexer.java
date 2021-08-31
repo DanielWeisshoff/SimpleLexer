@@ -2,10 +2,11 @@ package src.lexer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
-import javax.naming.InitialContext;
-
+/*
+TODO
+ - unicode characters are difficult to lex as a char, the cursor column and the error message are inaccurate because letters like 'ä' are stored as two chars
+*/
 public class Lexer {
 
 	private final boolean TOKENIZE_SPACES = true;
@@ -22,6 +23,9 @@ public class Lexer {
 
 	private int index = -1;
 	private char currentChar;
+
+	private int row = 1;
+	private int col = 0;
 
 	public Lexer(String text) {
 		this.text = text;
@@ -41,7 +45,6 @@ public class Lexer {
 		tokenMap.put('/', TokenType.DIV);
 		tokenMap.put('(', TokenType.O_ROUND_BRACKET);
 		tokenMap.put(')', TokenType.C_ROUND_BRACKET);
-		tokenMap.put('\n', TokenType.NEWLINE);
 		tokenMap.put('\t', TokenType.TAB);
 		tokenMap.put('.', TokenType.DOT);
 		tokenMap.put(',', TokenType.COMMA);
@@ -59,6 +62,7 @@ public class Lexer {
 	// ===============================================
 
 	private void advance() {
+		col++;
 		index++;
 		if (index < text.length())
 			currentChar = text.charAt(index);
@@ -102,7 +106,6 @@ public class Lexer {
 				} else
 					advance();
 			} else {
-
 				switch (currentChar) {
 					case '\'' -> t = buildStringToken();
 					case '"' -> t = buildStringToken();
@@ -111,14 +114,25 @@ public class Lexer {
 					case '>' -> t = buildBooleanToken();
 					case '!' -> t = buildBooleanToken();
 					case '#' -> skipComment();
-					default -> {
-						System.out.println("Illegal character found '" + currentChar + "'");
-						t = new Token(TokenType.EOF, null);
-					}
+					case '\n' -> t = newLine();
+					default -> t = throwError();
 				}
 			}
 		} while (t == null);
 		return t;
+	}
+
+	private Token newLine() {
+		row++;
+		col = 0;
+		advance();
+		return new Token(TokenType.NEWLINE, null);
+	}
+
+	private Token throwError() {
+		System.out.println("Found illegal character '" + currentChar + "' at " + row + "," + col);
+		//Evtl einen Error Token einführen
+		return new Token(TokenType.EOF, null);
 	}
 
 	private Token buildIdentifierToken() {
