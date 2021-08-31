@@ -84,12 +84,12 @@ public class Lexer {
 	public Token nextToken() {
 
 		if (index >= text.length())
-			return new Token(TokenType.EOF, null);
+			return new Token(TokenType.EOF);
 
 		Token t = null;
 		do {
 			if (tokenMap.containsKey(currentChar)) {
-				t = new Token(tokenMap.get(currentChar), null);
+				t = new Token(tokenMap.get(currentChar));
 				advance();
 			} else if (Character.isAlphabetic(currentChar)) {
 				t = buildIdentifierToken();
@@ -100,7 +100,7 @@ public class Lexer {
 					if (SPACES_TO_TABS)
 						t = buildTabToken();
 					else {
-						t = new Token(TokenType.WHITESPACE, null);
+						t = new Token(TokenType.WHITESPACE);
 						advance();
 					}
 				} else
@@ -126,13 +126,13 @@ public class Lexer {
 		row++;
 		col = 0;
 		advance();
-		return new Token(TokenType.NEWLINE, null);
+		return new Token(TokenType.NEWLINE);
 	}
 
 	private Token throwError() {
 		System.out.println("Found illegal character '" + currentChar + "' at " + row + "," + col);
 		//Evtl einen Error Token einführen
-		return new Token(TokenType.EOF, null);
+		return new Token(TokenType.EOF);
 	}
 
 	private Token buildIdentifierToken() {
@@ -163,7 +163,7 @@ public class Lexer {
 			advance();
 
 			if (whitespaceCount == TAB_SIZE)
-				return new Token(TokenType.TAB, null);
+				return new Token(TokenType.TAB);
 		}
 		return null;
 	}
@@ -190,20 +190,20 @@ public class Lexer {
 		char c = currentChar;
 		advance();
 
-		Token t = new Token(TokenType.EQUALS, null);
+		Token t = new Token(TokenType.EQUALS);
 		if (index < text.length() && currentChar == '=') {
 			advance();
 			switch (c + "=") {
-				case "<=" -> t = new Token(TokenType.LESSOREQUAL, null);
-				case ">=" -> t = new Token(TokenType.GREATEROREQUAL, null);
-				case "==" -> t = new Token(TokenType.EQUAL, null);
-				case "!=" -> t = new Token(TokenType.NOTEQUAL, null);
+				case "<=" -> t = new Token(TokenType.LESSOREQUAL);
+				case ">=" -> t = new Token(TokenType.GREATEROREQUAL);
+				case "==" -> t = new Token(TokenType.EQUAL);
+				case "!=" -> t = new Token(TokenType.NOTEQUAL);
 			}
 		} else
 			switch (c) {
-				case '<' -> t = new Token(TokenType.LESSTHAN, null);
-				case '>' -> t = new Token(TokenType.GREATERTHAN, null);
-				case '!' -> t = new Token(TokenType.NOT, null);
+				case '<' -> t = new Token(TokenType.LESSTHAN);
+				case '>' -> t = new Token(TokenType.GREATERTHAN);
+				case '!' -> t = new Token(TokenType.NOT);
 			}
 		return t;
 	}

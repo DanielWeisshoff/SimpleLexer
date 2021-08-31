@@ -12,6 +12,11 @@ public class Token {
 		this.value = value;
 	}
 
+	public Token(TokenType type) {
+		this.type = type;
+		value = null;
+	}
+
 	public static boolean areSameCategoryOP(Token t1, Token t2) {
 		return t1.isLineOP() && t2.isLineOP() || t1.isDotOP() && t2.isDotOP();
 	}
