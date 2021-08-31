@@ -2,6 +2,9 @@ package src.lexer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+
+import javax.naming.InitialContext;
 
 public class Lexer {
 
@@ -14,6 +17,7 @@ public class Lexer {
 
 	private final String text;
 	private final HashMap<Character, TokenType> tokenMap = new HashMap<>();
+
 	private String[] keywords;
 
 	private int index = -1;
@@ -97,7 +101,8 @@ public class Lexer {
 					}
 				} else
 					advance();
-			} else
+			} else {
+
 				switch (currentChar) {
 					case '\'' -> t = buildStringToken();
 					case '"' -> t = buildStringToken();
@@ -106,8 +111,12 @@ public class Lexer {
 					case '>' -> t = buildBooleanToken();
 					case '!' -> t = buildBooleanToken();
 					case '#' -> skipComment();
-					default -> advance();
+					default -> {
+						System.out.println("Illegal character found '" + currentChar + "'");
+						t = new Token(TokenType.EOF, null);
+					}
 				}
+			}
 		} while (t == null);
 		return t;
 	}
@@ -167,7 +176,7 @@ public class Lexer {
 		char c = currentChar;
 		advance();
 
-		Token t = null;
+		Token t = new Token(TokenType.EQUALS, null);
 		if (index < text.length() && currentChar == '=') {
 			advance();
 			switch (c + "=") {
